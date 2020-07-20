@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
 import UnderConstruction from 'react-under-construction';
 import 'react-under-construction/build/css/index.css';
 import './App.css';
@@ -7,6 +6,7 @@ import chart from './assets/chart.svg';
 import cat from './assets/cat.svg';
 import space from './assets/space.jpg';
 import time from './assets/time.svg';
+import connection from './assets/connection.svg';
 
 function App() {
   return (
@@ -34,17 +34,17 @@ function App() {
         //   url: "https://www.facebook.com/",
         //   image: "https://image.flaticon.com/icons/svg/220/220200.svg",
         // },
-        // {
-        //   url: "https://www.twitter.com/",
-        //   image: "https://image.flaticon.com/icons/svg/145/145812.svg",
-        // },
-        {
-          url: 'https://xd33m.github.io/',
-          image: time,
-        },
         {
           url: 'https:analytics.lucask.dev',
           image: chart,
+        },
+        {
+          url: 'https://spanningtree.lucask.dev',
+          image: connection,
+        },
+        {
+          url: 'https://xd33m.github.io/',
+          image: time,
         },
       ]}
     />
