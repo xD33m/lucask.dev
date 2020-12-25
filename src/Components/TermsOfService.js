@@ -7,6 +7,10 @@ class TermsOfService extends Component {
 		this.state = {};
 	}
 
+	componentDidMount() {
+		document.title = 'Terms of Service';
+	}
+
 	render() {
 		return (
 			<>

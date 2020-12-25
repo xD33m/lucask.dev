@@ -7,6 +7,10 @@ class PrivacyPolicy extends Component {
 		this.state = {};
 	}
 
+	componentDidMount() {
+		document.title = 'Privacy Policy';
+	}
+
 	render() {
 		return (
 			<>
