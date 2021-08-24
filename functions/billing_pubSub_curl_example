@@ -1,0 +1,12 @@
+curl \
+--request POST \
+--data 'fakePubSub={
+    "budgetDisplayName": "localTest",
+    "alertThresholdExceeded": 1.0,
+    "costAmount": 0.25,
+    "costIntervalStart": "2021-08-01T00:00:00Z",
+    "budgetAmount": 100.00,
+    "budgetAmountType": "SPECIFIED_AMOUNT",
+    "currencyCode": "EUR"
+}' \
+http://localhost:5001/websitecounter-256911/us-central1/fakePubSub
