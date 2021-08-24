@@ -13,14 +13,6 @@ const PROJECT_NAME = `projects/${PROJECT_ID}`;
 
 const discordHook = new Webhook(functions.config().discord.webhook_url);
 
-// exports.getBillingInfo = functions.https.onRequest(async (request, response) => {
-// 	setCredentialsForBiling();
-// 	const [res] = await billing.getProjectBillingInfo({ name: PROJECT_NAME });
-// 	const billingInfo = res;
-// 	console.log('Billing info', billingInfo);
-// 	response.send('Check logs');
-// });
-
 function setCredentialsForBiling() {
 	const client = new GoogleAuth({
 		scopes: [
@@ -38,14 +30,10 @@ async function disableBillingForReal() {
 		const [res] = await billing.getProjectBillingInfo({ name: PROJECT_NAME });
 		const billingInfo = res;
 		if (billingInfo.billingEnabled) {
-			const result = await billing.updateProjectBillingInfo({
+			await billing.updateProjectBillingInfo({
 				name: PROJECT_NAME,
 				resource: { billingAccountName: '' }, // disable billing
 			});
-			console.log(`Just disabled billing for ${PROJECT_NAME}`);
-			console.log(result);
-		} else {
-			console.log('Billing already disabled');
 		}
 	}
 }
@@ -72,10 +60,6 @@ async function handlePubSub(pubSubData) {
 
 	if (billingInfoDoc.exists) {
 		const previousBillingInfo = billingInfoDoc.data();
-
-		console.log(
-			`You have spent ${spentSoFar} compared to ${previousBillingInfo.lastReportedCost}`
-		);
 
 		if (spentSoFar - previousBillingInfo.lastReportedCost >= billingAlertIncrement) {
 			sendMessage = true;
@@ -125,19 +109,12 @@ async function handlePubSub(pubSubData) {
 }
 
 function isNewBillingCycle(pubSubData, previousBillingInfo) {
-	console.log(`Our cost interval start is ${pubSubData.costIntervalStart}`);
-	console.log(
-		`Our last recorded date is ${previousBillingInfo.lastReportedBillingStart}`
-	);
-
 	const startOfCurrentCyle = new Date(pubSubData.costIntervalStart);
 	const lastBillingCycleStartDate =
 		previousBillingInfo.lastReportedBillingStart.toDate();
 	if (startOfCurrentCyle.getTime() === lastBillingCycleStartDate.getTime()) {
-		console.log('The dates are the same');
 		return false;
 	} else {
-		console.log('The dates are different');
 		return true;
 	}
 }
@@ -156,11 +133,6 @@ function calculateProjectedCosts(pubSubData) {
 		) / 100;
 
 	const projectedCosts = Math.round((pubSubData.costAmount / pctThere) * 100) / 100;
-	console.log(
-		`You are ${
-			pctThere * 100
-		}% through the current cycle -- Projected cost is at ${projectedCosts}€`
-	);
 	return projectedCosts;
 }
 
@@ -175,11 +147,6 @@ function calculateEurosPerHour(pubSubData, previousBillingInfo) {
 	const deltaTimeHours = deltaTimeInSeconds / 3600;
 
 	const eurosPerHour = deltaSpent / deltaTimeHours;
-	console.log(
-		`You spent ${deltaSpent.toFixed(2)}€ in the last ${deltaTimeHours.toFixed(
-			2
-		)} hours, or about ${eurosPerHour.toFixed(2)}€ per hour`
-	);
 	return eurosPerHour;
 }
 
