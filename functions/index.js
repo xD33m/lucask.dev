@@ -3,7 +3,8 @@ const admin = require('firebase-admin');
 const { CloudBillingClient } = require('@google-cloud/billing');
 const { google } = require('googleapis');
 const { GoogleAuth } = require('google-auth-library');
-const { Webhook } = require('discord-webhook-node');
+const { Webhook, MessageBuilder } = require('discord-webhook-node');
+// const fetch = require('node-fetch');
 
 const firestore = admin.initializeApp().firestore();
 const billing = new CloudBillingClient();
@@ -51,34 +52,45 @@ exports.receiveBillingNotice = functions.pubsub.topic('billing').onPublish((mess
 async function handlePubSub(pubSubData) {
 	const billingInfoDoc = await firestore.doc('/private/billing_info').get();
 	const spentSoFar = pubSubData.costAmount;
-	const billingAlertIncrement = 0.01;
+
+	const billingAlertIncrement = 0.1;
 	const projectedCostsToFreakOutAbout = 10.0;
 	const eurosPerHourToFreakOutAbout = 1.0;
 	const killingProjectAmount = 20.0;
+
 	let sendMessage = false;
 	let messageString = '';
+
+	let isEmergency = false;
+	let killingProject = false;
+
+	let spendRate = null;
 
 	if (billingInfoDoc.exists) {
 		const previousBillingInfo = billingInfoDoc.data();
 
-		if (spentSoFar - previousBillingInfo.lastReportedCost >= billingAlertIncrement) {
+		if (
+			spentSoFar - previousBillingInfo.lastReportedCost >=
+			billingAlertIncrement
+		) {
 			sendMessage = true;
-			messageString = `The current cost of WatchtimeTracker is at ${pubSubData.costAmount}€.`;
-		} else if (isNewBillingCycle(pubSubData, previousBillingInfo)) {
+			messageString = `⚡: ${(
+				Math.round(pubSubData.costAmount * 100) / 100
+			).toFixed(2)}€ currently`;
+		} else if (checkNewBillingCycle(pubSubData, previousBillingInfo)) {
 			sendMessage = true;
-			messageString = `It's a new billing cycle! Cost of WatchtimeTracker is ${spentSoFar}€.`;
+			messageString = `✅ New Billing Cycle! \n\n ⚡: ${(
+				Math.round(pubSubData.costAmount * 100) / 100
+			).toFixed(2)}€ currently.`;
 		}
 
-		const spendRate = calculateEurosPerHour(pubSubData, previousBillingInfo);
+		spendRate = calculateEurosPerHour(pubSubData, previousBillingInfo);
 		if (spendRate > eurosPerHourToFreakOutAbout) {
 			sendMessage = true;
-			messageString += ` :warning: WatchtimeTracker currently costs about ${spendRate.toFixed(
-				2
-			)}€ per hour! :warning:`;
+			isEmergency = true;
+			messageString += ` \n\n 🕑: ${spendRate.toFixed(2)}€/hour! ⚠`;
 		} else {
-			messageString += ` WatchtimeTracker currently costs about ${spendRate.toFixed(
-				2
-			)}€ per hour.`;
+			messageString += ` \n\n 🕑: ${spendRate.toFixed(3)}€/hour`;
 		}
 	} else {
 		sendMessage = true;
@@ -88,14 +100,17 @@ async function handlePubSub(pubSubData) {
 	const projectedCosts = calculateProjectedCosts(pubSubData);
 	if (projectedCosts > projectedCostsToFreakOutAbout) {
 		sendMessage = true;
-		messageString += ` :warning: Projected costs are at about ${projectedCosts}€ this billing period! :warning: `;
+		isEmergency = true;
+		messageString += ` \n\n 🏁: ${projectedCosts}€ this month! ⚠`;
 	}
-	messageString += ` Projected costs are at about ${projectedCosts}€ this billing period`;
+	messageString += ` \n\n 🏁: ${projectedCosts}€ this month`;
 
 	if (spentSoFar >= killingProjectAmount) {
 		await disableBillingForReal();
 		sendMessage = true;
-		messageString += ` :warning: WARNING! BILLING DISBALED! :warning: THE PROJECT REACHED ${spentSoFar} :warning:`;
+		isEmergency = true;
+		killingProject = true;
+		messageString += ` \n\n ⚠ WARNING! BILLING DISBALED! ⚠ THE PROJECT REACHED ${spentSoFar}€ ⚠`;
 	}
 
 	if (sendMessage) {
@@ -104,11 +119,19 @@ async function handlePubSub(pubSubData) {
 			lastReportedBillingStart: new Date(pubSubData.costIntervalStart),
 			lastReportedCostTime: new Date(),
 		});
-		discordHook.send(messageString);
+		const discordEmbed = getDiscordEmbed(messageString, isEmergency);
+		discordHook.send(discordEmbed);
+		// if (isEmergency) {
+		// 	await sendNotificationToPhone(
+		// 		spentSoFar,
+		// 		spendRate,
+		// 		killingProject
+		// 	);
+		// }
 	}
 }
 
-function isNewBillingCycle(pubSubData, previousBillingInfo) {
+function checkNewBillingCycle(pubSubData, previousBillingInfo) {
 	const startOfCurrentCyle = new Date(pubSubData.costIntervalStart);
 	const lastBillingCycleStartDate =
 		previousBillingInfo.lastReportedBillingStart.toDate();
@@ -170,3 +193,70 @@ exports.fakePubSub = functions.https.onRequest((request, response) => {
 	}
 	response.send('All done! Check logs');
 });
+
+// exports.frageAnTim = functions.https.onRequest((request, response) => {
+// 	response.send('Heute Apex? :)');
+// });
+
+function getDiscordEmbed(messageString, isEmergency) {
+	let discordEmbed;
+
+	if (!isEmergency) {
+		discordEmbed = new MessageBuilder()
+			.setAuthor(
+				'Billing Update',
+				'https://img.icons8.com/color/452/firebase.png',
+				'https://console.firebase.google.com/u/0/project/websitecounter-256911/usage'
+			)
+			.setColor('#008000')
+			.setDescription(messageString)
+			// .setImage('https://cdn.discordapp.com/embed/avatars/0.png')
+			.setFooter('Looking good 😀')
+			.setTimestamp();
+	} else {
+		discordEmbed = new MessageBuilder()
+			.setAuthor(
+				'Billing Update',
+				'https://img.icons8.com/color/452/firebase.png',
+				'https://console.firebase.google.com/u/0/project/websitecounter-256911/usage'
+			)
+			.setColor('#FF0000')
+			.setThumbnail(
+				'https://images.emojiterra.com/google/android-10/512px/26a0.png'
+			)
+			.setDescription(messageString)
+			.setFooter('Something is wrong 😕')
+			.setTimestamp();
+	}
+	return discordEmbed;
+}
+
+// async function postData(url = '', data = {}) {
+// 	const response = await fetch(url, {
+// 		method: 'POST',
+// 		headers: {
+// 			'Content-Type': 'application/json',
+// 		},
+// 		body: JSON.stringify(data),
+// 	});
+// 	return response.json();
+// }
+
+// async function sendNotificationToPhone(spentSoFar, spendRate, killingProject) {
+// 	let msg = '';
+// 	if (killingProject) msg += 'WATCHTIME TRACKER DISABLED!';
+// 	if (spendRate !== null)
+// 		msg += `Unusual costs! Currently ${spendRate.toFixed(2)}€/hour.`;
+
+// 	msg += `Spent so far: ${spentSoFar.toFixed(2)}€.`;
+
+// 	const gotifyUrl = functions.config().gotify.url;
+// 	const gotifyToken = functions.config().gotify.token;
+
+// 	const res = postData(`${gotifyUrl}message?token=${gotifyToken}`, {
+// 		title: 'WatchtimeTracker Alert',
+// 		message: msg,
+// 		priority: 5,
+// 	});
+// 	return res;
+// }

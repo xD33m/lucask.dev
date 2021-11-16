@@ -3,8 +3,8 @@ curl \
 --data 'fakePubSub={
     "budgetDisplayName": "localTest",
     "alertThresholdExceeded": 1.0,
-    "costAmount": 0.25,
-    "costIntervalStart": "2021-08-01T00:00:00Z",
+    "costAmount": 0.70,
+    "costIntervalStart": "2021-05-01T00:00:00Z",
     "budgetAmount": 100.00,
     "budgetAmountType": "SPECIFIED_AMOUNT",
     "currencyCode": "EUR"
