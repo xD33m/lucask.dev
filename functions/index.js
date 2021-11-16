@@ -156,7 +156,8 @@ function calculateProjectedCosts(pubSubData) {
 		) / 100;
 
 	const projectedCosts = Math.round((pubSubData.costAmount / pctThere) * 100) / 100;
-	return projectedCosts;
+	const projectedCostsWithMwst = Math.round((projectedCosts * 1.19) * 100) / 100;
+	return projectedCostsWithMwst;
 }
 
 function calculateEurosPerHour(pubSubData, previousBillingInfo) {
