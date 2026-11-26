@@ -13,6 +13,7 @@ import connection from './assets/connection.svg';
 import { Router, Location } from '@gatsbyjs/reach-router';
 import TermsOfService from './Components/TermsOfService';
 import PrivacyPolicy from './Components/PrivacyPolicy';
+import DeleteAccount from './Components/DeleteAccount';
 
 function App() {
 	return (
@@ -74,6 +75,7 @@ function App() {
 				/>
 				<TermsOfService path="tos" />
 				<PrivacyPolicy path="privacy" />
+				<DeleteAccount path="delete-account" />
 			</Router>
 		</Location>
 	);
