@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Container, Grid } from '@mui/material';
+import { WatchtimeAndroidPrivacy } from './WatchtimeAndroid';
 
 class PrivacyPolicy extends Component {
 	constructor(props) {
@@ -1864,6 +1865,7 @@ class PrivacyPolicy extends Component {
 								Economic Area (EEA), please contact Your local data
 								protection authority in the EEA.
 							</p>
+							<WatchtimeAndroidPrivacy />
 							<div
 								style={{
 									marginTop: '0cm',
