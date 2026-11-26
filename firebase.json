@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "homepage-9ca2d",
+    "site": "websitecounter-256911",
     "public": "build",
     "ignore": [
       "firebase.json",
