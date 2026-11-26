@@ -1,7 +1,7 @@
 import React from 'react';
 
 /** The public support address for Watchtime Tracker (privacy questions and deletion requests). */
-export const SUPPORT_EMAIL = 'lucaskeller98@mail.com';
+export const SUPPORT_EMAIL = 'lucaskeller98@gmail.com';
 
 const sectionTitle = {
 	marginTop: '0cm',
